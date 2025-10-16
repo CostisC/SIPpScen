@@ -1,0 +1,86 @@
+# Set <logspath> to the path of the 'logs' directory
+
+# ============================== Filebeat inputs ===============================
+
+filebeat.inputs:
+
+# Each - is an input. Most options can be set at the input level, so
+# you can use different inputs for various configurations.
+# Below are the input-specific configurations.
+
+# filestream is an input for collecting log messages from files.
+- type: filestream
+
+  # Unique ID among all inputs, an ID is required.
+  id: sipp_traces
+
+  # Change to true to enable this input configuration.
+  enabled: true
+
+  fields:
+    type: sippscen 
+  fields_under_root: true
+
+
+  # Paths that should be crawled and fetched. Glob based paths.
+  paths:
+    - <logspath>/*_traces.out
+
+  parsers:
+    - multiline:
+        type: pattern
+        pattern: '----------------------------------------------- \d{4}-' 
+        negate: true
+        match: after
+
+
+  # Exclude lines. A list of regular expressions to match. It drops the lines that are
+  # matching any regular expression from the list.
+  # Line filtering happens after the parsers pipeline. If you would like to filter lines
+  # before parsers, use include_message parser.
+  exclude_lines: ['EAGAIN']
+
+  # Include lines. A list of regular expressions to match. It exports the lines that are
+  # matching any regular expression from the list.
+  # Line filtering happens after the parsers pipeline. If you would like to filter lines
+  # before parsers, use include_message parser.
+  #include_lines: ['^ERR', '^WARN']
+
+  # Exclude files. A list of regular expressions to match. Filebeat drops the files that
+  # are matching any regular expression from the list. By default, no files are dropped.
+  #prospector.scanner.exclude_files: ['.gz$']
+
+  # Optional additional fields. These fields can be freely picked
+  # to add additional information to the crawled log files for filtering
+  #fields:
+  #  level: debug
+  #  review: 1
+
+- type: filestream
+
+  # Unique ID among all inputs, an ID is required.
+  id: sipp_errors
+
+  # Change to true to enable this input configuration.
+  enabled: true
+
+  fields:
+    type: sippscen 
+  fields_under_root: true
+  tags: ["errors"]
+
+
+  # Paths that should be crawled and fetched. Glob based paths.
+  paths:
+    - <logspath>/*_errors.out
+
+  parsers:
+    - multiline:
+        type: pattern
+        pattern: '^\d{4}-\d{2}-\d{2}T' 
+        negate: true
+        match: after
+
+  include_lines: [ '^\d{4}-\d{2}-\d{2}T' ]
+
+

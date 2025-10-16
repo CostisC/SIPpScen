@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+
+<scenario name="Register">
+
+<!--
+  <Global variables="UA"/>
+
+  <nop>
+     <action>
+       <assignstr assign_to="UA" value="SIPP client" />
+     </action>
+  </nop>
+-->
+
+  <nop>
+    <action>
+      <assignstr assign_to="num" value="[field0]" />
+      <ereg regexp=".*(......)" search_in="var" variable="num" assign_to="junk,Epid"/>
+    </action>
+  </nop>
+  <Reference variables="junk"/>
+
+  <send>
+
+    <![CDATA[
+      REGISTER sip:[remote_host]:[remote_port];transport=[transport] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      Max-Forwards: 70
+      From: "[field0]" <sip:[field0]@[remote_host]:[remote_port]>;epid=SC[$Epid];tag=[pid]SIPpTag00[call_number]
+      To: <sip:[field0]@[remote_host]:[remote_port]>
+      Contact: "[field0]" <sip:[field0]@[local_ip]:[local_port];transport=[transport]>;expires={{reg_expire_sec}}
+      User-Agent: SIPp client
+      CSeq: [cseq] REGISTER
+      Geolocation: <cid:[field0]@[local_ip]>
+      Content-ID: <[field0]@[local_ip]>
+      Call-ID: [call_id]
+      Content-Type: application/pidf+xml
+      Content-Length: [len]
+
+      <?xml version="1.0" encoding="UTF-8"?><presence xmlns="urn:ietf:params:xml:ns:pidf" xmlns:gp="urn:ietf:params:xml:ns:pidf:geopriv10" xmlns:gbp="urn:ietf:params:xml:ns:pidf:geopriv10:basicPolicy" xmlns:ca="urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr" entity="sip:[field0]@[local_ip]"><tuple id="SCS2-[local_ip]:[local_port]"><status>
+      <gp:geopriv>
+      <gp:location-info>
+      <ca:civicAddress>
+      <ca:country>BR</ca:country>
+      <ca:A1>PR</ca:A1>
+      <ca:A2>Fazendinha</ca:A2>
+      <ca:A3>Curitiba</ca:A3>
+      <ca:A6>CITS</ca:A6>
+      <ca:PRD>UNIFY</ca:PRD>
+      <ca:STS>Street</ca:STS>
+      <ca:HNO>702</ca:HNO>
+      <ca:PC>81270-050</ca:PC>
+      <ca:BLD>2</ca:BLD>
+      <ca:FLR>2nd</ca:FLR>
+      <ca:ROOM>2</ca:ROOM>
+      <ca:PCN>FAZ</ca:PCN>
+      <ca:RD>NET 15</ca:RD>
+      <ca:PRM>Rua do Semeador 197</ca:PRM>
+      <ca:POM>CIC</ca:POM>
+      </ca:civicAddress>
+      </gp:location-info>
+      <gp:usage-rules></gp:usage-rules>
+      <gp:method>LLDP-MED</gp:method>
+      </gp:geopriv>
+      </status></tuple>
+      <timestamp>[timestamp]</timestamp>
+      </presence>
+
+    ]]>
+  </send>
+
+  <recv response="404" optional="true"/>
+  <recv response="200"/>
+
+
+
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario>
+

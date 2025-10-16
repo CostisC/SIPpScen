@@ -1,0 +1,22 @@
+Source: sippscen
+#Section: unknown
+Priority: optional
+Maintainer: CostisC <konstantinos.kontopoulos@atos.net>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+Standards-Version: 4.6.2
+#Homepage: <insert the upstream URL, if relevant>
+#Vcs-Browser: https://salsa.debian.org/debian/sippscen
+#Vcs-Git: https://salsa.debian.org/debian/sippscen.git
+
+Package: sippscen
+Architecture: any
+Multi-Arch: foreign
+Depends:
+ ${shlibs:Depends},
+ bash,
+ util-linux,
+ python3 (>= 3.9),
+ ${misc:Depends},
+Description: sippscen project

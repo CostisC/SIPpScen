@@ -1,0 +1,15 @@
+# media-server
+media-server@.service lib/systemd/system/
+server.conf etc/media-server/
+resources/sample.wav etc/media-server
+debian/sippscen.1 usr/share/man/man1/
+# SIPpScen
+SIPpScen/*.yaml etc/media-server/SIPpScen/
+SIPpScen/registrar-mock.sh etc/media-server/SIPpScen/
+SIPpScen/sippscen usr/bin
+SIPpScen/sippscen.py opt/sippscen/
+SIPpScen/sippscen_utils.py opt/sippscen/
+SIPpScen/scenarios/* etc/media-server/SIPpScen/scenarios/
+SIPpScen/elk-files/* etc/media-server/SIPpScen/elk-files/
+# telegraf
+SIPpScen/telegraf/telegraf.conf etc/media-server/SIPpScen/

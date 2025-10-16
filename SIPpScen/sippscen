@@ -1,0 +1,28 @@
+#!/bin/bash
+
+SIPpScen=/opt/sippscen/sippscen.py
+
+ARGS=($@)
+
+find_elem()
+{
+   local index=`printf "%s\n" ${ARGS[@]} | grep -nw -e "$1"`
+   [ -z "$index" ] && return 1
+   index=`cut -d':' -f1 <<< "$index"`
+   unset ARGS[$((index-1))]
+   return 0
+
+}
+
+if find_elem "-h" || find_elem "--help"; then 
+   $SIPpScen -h
+   echo "  -D                    Run as a daemon (output: sippscen.log)"
+   exit
+fi
+
+if find_elem "-D"; then
+   nArgs=`printf "%s " ${ARGS[@]}`
+   setsid $SIPpScen $nArgs > sippscen.log 2>&1 & 
+else
+   $SIPpScen $@
+ fi

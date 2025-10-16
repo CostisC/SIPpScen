@@ -1,0 +1,135 @@
+influxdb:
+  url: "http://10.2.100.2:8087"
+  token: FlB0MeOSvOnGcSoLuIpmyHHdFv5B_aLE7pNHvtQEQnvdsaKgktdRx5wdiBOPDXSH1WHJ3PT7cW3IZhOnVvqMPg==
+  org: Perf_DC2
+  bucket: sipp_bucket
+  tag: A-B-C
+
+
+rtp-servers:
+  - ms1: 10.3.28.28:9090
+  - ms2: localhost:9099
+
+run:
+  duration: 70s
+  receive-timeout: 5s
+  # send-timeout: 5s
+
+
+scenario:
+
+  - B-callers_LbV:
+      type: server
+      scenario-file: uas_template
+      #number-endpoints: 300
+      cps: 3
+      call-duration: 25s
+      rtp-server: ms1
+      rtp-port-offset: 20000
+      sip-port: 5070
+      dn-start: 30210116000   # 300 numbers
+      # local-ip: 127.0.0.1
+      # receive-timeout: 5s
+      # send-timeout: 50ms
+      register:
+       registrar: ng911n1sipsm.h8k.sec:5060
+       register-file: register_template
+       unregister-file: unregister_template
+       cps: 10
+
+  - A-callers_LbV:
+      type: client
+      scenario-file: uac_LbV_template
+      #number-endpoints: 2
+      cps: 3
+      call-duration: 20s
+      #total-calls: 1
+      rtp-server: ms1
+      rtp-port-offset: 22000
+      sip-port: 5060
+      dn-start: 302200880000
+      #local-ip: 127.0.0.1
+      destination: bcf-i-perf.aggr.california.ng911:5060
+      call-service: 911556
+      #pattern:
+      #  timepoints:
+      #    - 10s
+      #    - 20s
+      #  cps:
+      #    - 3
+      #    - 1
+      #  repeat: true
+
+  - B-callers_LbR:
+      type: server
+      scenario-file: uas_template
+      #number-endpoints: 300
+      cps: 3
+      call-duration: 21s
+      rtp-server: ms1
+      rtp-port-offset: 20300
+      sip-port: 5071
+      dn-start: 30210116600   # 300 numbers
+      # local-ip: 127.0.0.1
+      # receive-timeout: 5s
+      # send-timeout: 50ms
+      register:
+       registrar: ng911n1sipsm.h8k.sec:5060
+       register-file: register_template
+       unregister-file: unregister_template
+       cps: 10
+
+  - A-callers_LbR:
+      type: client
+      scenario-file: uac_LbR_template
+      #number-endpoints: 2
+      cps: 3
+      call-duration: 20s
+      #total-calls: 1
+      rtp-server: ms1
+      rtp-port-offset: 22300
+      sip-port: 5061
+      dn-start: 302200880300
+      #local-ip: 127.0.0.1
+      destination: bcf-i-perf.aggr.california.ng911:5060
+      call-service: 911556
+      #pattern:
+      #  timepoints:
+      #    - 10s
+      #    - 20s
+      #  cps:
+      #    - 3
+      #    - 1
+      #  repeat: true
+
+  - B-callers_noLoc:
+      type: server
+      scenario-file: uas_template
+      #number-endpoints: 3
+      cps: 3
+      call-duration: 21s
+      rtp-server: ms1
+      rtp-port-offset: 20600
+      sip-port: 5072
+      dn-start: 30210117100   # 100 numbers
+      register:
+       registrar: ng911n1sipsm.h8k.sec:5060
+       register-file: register_template
+       unregister-file: unregister_template
+       cps: 10
+
+  - A-callers_noLoc:
+      type: client
+      scenario-file: uac_noLoc_template
+      #number-endpoints: 2
+      cps: 3
+      call-duration: 20s
+      #total-calls: 1
+      rtp-server: ms1
+      rtp-port-offset: 22600
+      sip-port: 5062
+      dn-start: 302200882000
+      #local-ip: 127.0.0.1
+      destination: bcf-i-perf.aggr.california.ng911:5060
+      call-service: 911556
+

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+
+<scenario name="Unregister">
+
+
+  <nop>
+    <action>
+      <assignstr assign_to="num" value="[field0]" />
+      <ereg regexp=".*(......)" search_in="var" variable="num" assign_to="junk,Epid"/>
+    </action>
+  </nop>
+  <Reference variables="junk"/>
+
+  <send>
+
+    <![CDATA[
+      REGISTER sip:[remote_host]:[remote_port];transport=[transport] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      Max-Forwards: 70
+      From: "[field0]" <sip:[field0]@[remote_host]:[remote_port]>;epid=SC[$Epid];tag=[pid]SIPpTag00[call_number]
+      To: <sip:[field0]@[remote_host]:[remote_port]>
+      Contact: "[field0]" <sip:[field0]@[local_ip]:[local_port];transport=[transport]>;expires=0
+      User-Agent: SIPp client
+      CSeq: [cseq] REGISTER
+      Call-ID: [call_id]
+      Content-Length: [len]
+
+    ]]>
+  </send>
+
+  <recv response="404" optional="true"/>
+  <recv response="200"/>
+
+
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario>
+

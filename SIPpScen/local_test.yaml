@@ -1,0 +1,84 @@
+influxdb:
+  url: "http://10.2.100.2:8087"
+  token: FlB0MeOSvOnGcSoLuIpmyHHdFv5B_aLE7pNHvtQEQnvdsaKgktdRx5wdiBOPDXSH1WHJ3PT7cW3IZhOnVvqMPg==
+  org: Perf_DC2
+  bucket: sipp_bucket
+
+
+rtp-servers:
+  - ms1: localhost:9090
+  - ms2: localhost:9099
+
+run:
+  duration: 15s
+  receive-timeout: 5s
+  # send-timeout: 5s
+
+
+scenario:
+  - B-callers:
+      type: server
+      scenario-file: uas_template
+      number-endpoints: 1
+      cps: 2
+      call-duration: 10s500ms
+      rtp-server: ms1
+      rtp-port-offset: 21000
+      sip-port: 5061
+      dn-start: 30210117000
+      local-ip: 127.0.0.1
+      # receive-timeout: 5s
+      # send-timeout: 50ms
+      #register:
+      # registrar: 127.0.0.1:5666
+      # register-file: register_template
+      # cps: 10
+
+  - A-callers:
+      type: client
+      scenario-file: uac_LbR_template
+      #number-endpoints: 160
+      cps: 1
+      call-duration: 10s
+      total-calls: 1
+      rtp-server: ms1
+      rtp-port-offset: 20050
+      sip-port: 5060
+      dn-start: 30220117000
+      local-ip: 127.0.0.1
+      destination: 127.0.0.1:5061
+      call-service: 911556
+      #pattern:
+      #  timepoints:
+      #    - 10s
+      #    - 20s
+      #  cps:
+      #    - 2
+      #    - 1
+      #  #repeat: true
+
+  - A-callers_2:
+      type: client
+      scenario-file: uac_LbR_template
+      cps: 2
+      call-duration: 10s
+      # total-calls: 20
+      rtp-server: ms12
+      rtp-port-offset: 20150
+      sip-port: 5062
+      dn-start: 30220119000
+      local-ip: 127.0.0.1
+      destination: 127.0.0.1:5061
+      # pattern:
+      #   timepoints:
+      #     - 8s
+      #     - 5s
+      #   cps:
+      #     - 5
+      #     - 1
+      #   repeat: true
+
+
+
+
+

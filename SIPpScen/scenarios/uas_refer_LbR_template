@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<scenario name="Basic UAS responder with REFER">
+
+
+
+  <!-- By adding rrs="true" (Record Route Sets), the route sets         -->
+  <!-- are saved and used for following messages sent. Useful to test   -->
+  <!-- against stateful SIP proxies/B2BUAs.                             -->
+  <!-- Adding ignoresdp="true" here would ignore the SDP data: that     -->
+  <!-- can be useful if you want to reject reINVITEs and keep the       -->
+  <!-- media stream flowing.                                            -->
+
+  <recv request="INVITE">
+    <action>
+          <!-- Get the To: DN -->
+	  <ereg search_in="hdr"
+		  regexp="&lt;sip:([^@]*)"
+		  header="To:"
+		  check_it="true"
+		  assign_to="dummy,received-to" />
+
+          <!-- Get the Contact: R-URI -->
+	  <ereg search_in="hdr"
+		  regexp="&lt;([^&gt;]*)"
+		  header="Contact:"
+		  check_it="true"
+		  assign_to="dummy,received-contact" />
+    </action>
+  </recv>
+  <Reference variables="dummy"/>
+
+  <!-- The '[last_*]' keyword is replaced automatically by the          -->
+  <!-- specified header if it was present in the last message received  -->
+  <!-- (except if it was a retransmission). If the header was not       -->
+  <!-- present or if no message has been received, the '[last_*]'       -->
+  <!-- keyword is discarded, and all bytes until the end of the line    -->
+  <!-- are also discarded.                                              -->
+  <!--                                                                  -->
+  <!-- If the specified header was present several times in the         -->
+  <!-- message, all occurrences are concatenated (CRLF separated)       -->
+  <!-- to be used in place of the '[last_*]' keyword.                   -->
+
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 180 Ringing
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[pid]SIPpTag01[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: "[$received-to]" <sip:[$received-to]@[local_ip]:[local_port];transport=[transport]>
+      X-Siemens-Call-Type: ST-insecure
+      Allow: INVITE,ACK,CANCEL,BYE,REFER,NOTIFY,UPDATE,INFO
+      Allow-Events: talk, hold, conference
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <nop>
+	<!-- rtcp_port += field0 -->
+	<action>
+		<assignstr assign_to="1" value="[field0]"/>
+		<todouble assign_to="2" variable="1"/>
+		<add assign_to="2" value="1"/>
+		<assignstr assign_to="3" value="[$2]"/>
+		<ereg regexp="[0-9]+" search_in="var" variable="3" assign_to="rtcp_port" check_it="true" />
+
+  		<!-- start media stream  receiving endpoint (RTP & RTCP) -->
+		<exec command="curl -s 'http://{{media_server}}/stream?port=[field0]&duration={{duration}}'" />
+	</action>
+  </nop>
+
+
+  <send>
+
+    <![CDATA[
+
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_Record-Route:]
+      [last_From:]
+      [last_To:];tag=[pid]SIPpTag01[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: "[$received-to]" <sip:[$received-to]@[local_ip]:[local_port];transport=[transport]>
+      X-Siemens-Call-Type: ST-insecure
+      Allow: INVITE,ACK,CANCEL,BYE,REFER,NOTIFY,UPDATE,INFO
+      Allow-Events: talk, hold, conference
+      Supported: replaces
+      Content-Type: application/sdp
+      Content-Length: [len]
+
+      v=0
+      o=user1 53655765 2353687637 IN IP[local_ip_type] {{media_ip}}
+      s=-
+      c=IN IP[media_ip_type] [media_ip]
+      t=0 0
+      m=audio [field0] RTP/AVP 8
+      a=rtpmap:8 PCMU/8000
+      a=rtcp:[$rtcp_port] IN IP[local_ip_type] {{media_ip}}
+
+    ]]>
+  </send>
+
+  <recv request="ACK" optional="false"
+        rtd="true" crlf="true">
+      <action>
+            <!-- Get the To: -->
+            <ereg search_in="hdr"
+          	  regexp=".*"
+          	  header="To:"
+          	  check_it="true"
+          	  assign_to="ack-to" />
+
+            <!-- Get the From: -->
+            <ereg search_in="hdr"
+          	  regexp=".*"
+          	  header="From:"
+          	  check_it="true"
+          	  assign_to="ack-from" />
+
+            <!-- Get the Via: domain: -->
+            <ereg search_in="hdr"
+          	  regexp="SIP.* ([^;]+)"
+          	  header="Via:"
+          	  check_it="true"
+          	  assign_to="dummy,via-domain" />
+      </action>
+  </recv>
+
+
+  <!-- Pause x seconds, and then send a REFER -->
+  <pause milliseconds="{{refer_pause}}"/>
+
+  <send crlf="true">
+    <![CDATA[
+
+      REFER [$received-contact] SIP/2.0 
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      Max-Forwards: 70
+      User-Agent: Referral 
+      From: [$ack-to]
+      To: [$ack-from]
+      [last_Call-ID:]
+      CSeq: [call_number] REFER
+      Contact: "[$received-to]" <sip:[$received-to]@[local_ip]:[local_port];transport=[transport]>
+      Refer-To: <sip:transferLbR@psap.performance.ng911:5060;transport=tcp>
+      Referred-By: <sip:[$received-to]@[$via-domain]>
+      Supported: timer, replaces
+      Content-Length: 0
+
+    ]]>
+  </send>
+ 
+  <recv response="100" optional="true">
+  </recv>
+
+  <!-- 202 or first notify may arrive in any order -->
+  <recv response="202" optional="true" next="got_202"/>
+  <!-- NOTIFY Trying -->
+  <recv request="NOTIFY" optional="true" next="got_notify"/>
+
+  <label id="got_202"/>
+  <recv request="NOTIFY" optional="false" next="skip"/>
+
+  <label id="got_notify"/>
+  <recv response="202" optional="false"/>
+
+  <label id="skip"/>
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 200 OK
+      [last_From:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      [last_Via:]
+      [last_To:]
+      Contact: "[$received-to]" <sip:[$received-to]@[local_ip]:[local_port];transport=[transport]>
+      X-Siemens-Call-Type: ST-insecure
+      Allow: INVITE,ACK,CANCEL,BYE,REFER,NOTIFY,UPDATE,INFO
+      Allow-Events: talk, hold, conference
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- NOTIFY Ringing -->
+  <recv request="NOTIFY">
+  </recv>
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 200 OK
+      [last_From:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      [last_Via:]
+      [last_To:]
+      Contact: "[$received-to]" <sip:[$received-to]@[local_ip]:[local_port];transport=[transport]>
+      X-Siemens-Call-Type: ST-insecure
+      Allow: INVITE,ACK,CANCEL,BYE,REFER,NOTIFY,UPDATE,INFO
+      Allow-Events: talk, hold, conference
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- NOTIFY OK -->
+  <recv request="NOTIFY">
+  </recv>
+
+  <send>
+    <![CDATA[
+
+      SIP/2.0 200 OK
+      [last_From:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      [last_Via:]
+      [last_To:]
+      Contact: "[$received-to]" <sip:[$received-to]@[local_ip]:[local_port];transport=[transport]>
+      X-Siemens-Call-Type: ST-insecure
+      Allow: INVITE,ACK,CANCEL,BYE,REFER,NOTIFY,UPDATE,INFO
+      Allow-Events: talk, hold, conference
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- Pause x seconds, and then send a BYE -->
+  <pause milliseconds="{{bye_pause}}"/>
+
+  <send crlf="true">
+    <![CDATA[
+
+      BYE [$received-contact] SIP/2.0 
+      Max-Forwards: 70
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      From: [$ack-to]
+      To: [$ack-from]
+      [last_Call-ID:]
+      CSeq: [call_number] BYE
+      X-Siemens-Call-Type: ST-insecure
+      Supported: timer
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <recv response="200" crlf="true">
+  </recv>
+
+
+  <!-- Keep the call open for a while in case the 200 is lost to be     -->
+  <!-- able to retransmit it if we receive the BYE again.               -->
+   <!--   <timewait milliseconds="4000"/> -->
+
+  <!-- definition of the response time repartition table (unit is ms)   -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+  <!-- definition of the call length repartition table (unit is ms)     -->
+  <CallLengthRepartition value="10, 50, 100, 500, 1000, 5000, 10000"/>
+
+</scenario>
+

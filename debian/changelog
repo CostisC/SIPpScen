@@ -1,0 +1,28 @@
+sippscen (1.2-3) stsable; urgency=medium
+
+  * correct sample.wav delivery path
+  * sipp CSV fixed points
+  * timestamped output
+  * daemonized option
+
+ -- CostisC <ccostis@gmail.com>  Sat, 12 Jul 2025 13:41:28 +0300
+
+sippscen (1.2-2) stable; urgency=medium
+
+  * sippscen included
+
+ -- CostisC <ccostis@gmail.com>  Fri, 11 Jul 2025 18:08:40 +0300
+
+sippscen (1.2-1) stable; urgency=medium
+
+  * Package building
+
+ -- root <ccostis@gmail.com>  Thu, 10 Jul 2025 10:18:05 +0300
+
+sippscen (1.1-2) unstable; urgency=medium
+
+  * Patch fix-shared-memory.patch:
+    - Fix shared memory handling in SharedList initialization
+    - Add missing error handling and improve memory safety
+
+ -- CostisC <ccostis@gmail.com>  Mon, 15 Jul 2024 10:00:00 +0000

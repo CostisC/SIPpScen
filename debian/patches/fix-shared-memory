@@ -1,0 +1,32 @@
+Description: memory truncation handling
+
+ .
+ sippscen (1.1-2ubuntu1) UNRELEASED; urgency=medium
+ .
+   * Patch fix-shared-memory.patch:
+Author: root <root@OpenSIPS.lxd>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout https://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: (upstream|backport|vendor|other), (<patch-url>|commit:<commit-id>)
+Bug: <upstream-bugtracker-url>
+Bug-Debian: https://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: (no|not-needed|<patch-forwarded-url>)
+Applied-Upstream: <version>, (<commit-url>|commit:<commid-id>)
+Reviewed-By: <name and email of someone who approved/reviewed the patch>
+Last-Update: 2025-07-04
+
+--- sippscen-1.1.orig/src/shared_list.cpp
++++ sippscen-1.1/src/shared_list.cpp
+@@ -47,6 +47,7 @@ SharedList::SharedList(type_t type, cons
+             throw std::runtime_error("Failed to truncate memory: "
+                 + std::string(strerror(errno)));
+         }
++
+         // Map shared memory
+         list = (SharedLst*)mmap(NULL, sizeof(SharedLst), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+         if (close(fd) == -1)

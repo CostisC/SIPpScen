@@ -1,0 +1,15 @@
+[Unit]
+Description=Media-Endpoints Server
+After=network.target
+
+[Service]
+Environment="PORT=%i"
+EnvironmentFile=-/etc/media-server/server.conf
+EnvironmentFile=-/etc/media-server/server-%i.conf
+ExecStart=/usr/bin/media_server -p $PORT -w $WAVE -c $CODEC
+KillSignal=SIGINT
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
