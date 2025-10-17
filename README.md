@@ -170,6 +170,7 @@ scenario:
 - **number-endpoints:** limit the number of spawned Media Endpoints. If it is not provided, their number is computed from `cps * call-duration`
 - **cps:** the targeted generated "calls-per-second" traffic
 - **call-duration:** the duration of each call session
+- **total-calls:** applicable to UAC groups, if set, the number of generated calls will be limited to this number 
 - **rtp-server:** the Media Server to use, as defined in *rtp-servers:* section
 - **rtp-port-offset:** the starting port of the range of UDP ports to be used by the Media Endpoints, for RTP and RTCP channels. For example, if set to *21000*, the 1st Endpoint will use :21000 for RTP and :21001 for RTCP, the 2nd Endpoint will use :21002 for RTP and :21003 for RTCP, and so forth.
 - **sip-port:** the SIP port that the group of UA will use
