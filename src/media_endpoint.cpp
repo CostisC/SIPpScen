@@ -36,6 +36,7 @@ static const char desc[] =
 ;
 
 #define SAMPLE_WAV "sample.wav"
+#define LOG_ERROR 1
 
 static Data conf;
 string g_wavefile = SAMPLE_WAV;
@@ -55,6 +56,7 @@ void endThread() {
     cv.notify_one();
 }
 
+
 void endpoint_thread()
 {
     pj_thread_desc thread_desc;
@@ -65,7 +67,7 @@ void endpoint_thread()
     {
         pjmedia_dir dir = (g_server)? PJMEDIA_DIR_DECODING : PJMEDIA_DIR_ENCODING;
         cout << "create endpoint: " << SharedList::print_element(&conf) << endl;
-        RTP_endpoint endpoint(conf.port, 1, dir, g_codec.c_str());
+        RTP_endpoint endpoint(conf.port, LOG_ERROR, dir, g_codec.c_str());
         while (b_running) {
             unique_lock<mutex> lk(cv_m);
             endpoint.setRemoteAddr(conf.dest_address, conf.dest_port);
@@ -145,7 +147,7 @@ int main(int argc, char *argv[])
             strncpy(conf.dest_address, pj_optarg, ADDR_SZ);
             break;
         case 'd':
-            conf.duration = (pj_uint16_t) atoi(pj_optarg);
+            conf.duration = atoi(pj_optarg);
             if (!conf.duration) {
                 printf("Error: invalid duration %s\n", pj_optarg);
                 return 1;

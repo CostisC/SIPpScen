@@ -1,3 +1,9 @@
+sippscen (1.2-5) stable; urgency=medium
+
+  * Correct duration signrature
+
+ -- CostisC <ccostis@gmail.com>  Sun, 19 Oct 2025 23:13:18 +0300
+
 sippscen (1.2-4) stable; urgency=medium
 
   * SIPP scenarios correction
