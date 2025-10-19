@@ -11,7 +11,8 @@ InfluxDBClient::InfluxDBClient(const std::string& url,
                              const std::string& bucket,
                              const std::string& token)
     : url_(url), org_(org), bucket_(bucket), token_(token),
-      connected_(false), curl_(nullptr), headers_(nullptr) {
+      connected_(false), curl_(nullptr), headers_(nullptr),
+      not_connect_notify(false) {
     connected_ = initializeCurl();
 }
 
@@ -56,7 +57,10 @@ bool InfluxDBClient::send(const std::string& measurement,
                          const std::string& fields,
                          int64_t timestamp) {
     if (!connected_) {
-        std::cerr << "Not connected to InfluxDB" << std::endl;
+        if (!not_connect_notify) {
+            std::cerr << "Not connected to InfluxDB" << std::endl;
+            not_connect_notify = true;
+        }
         return false;
     }
 

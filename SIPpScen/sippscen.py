@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import yaml, argparse, subprocess
+import yaml, argparse, subprocess, atexit
 import asyncio
 import sys, shutil, math, copy, os, time
 from jinja2 import Environment, FileSystemLoader, exceptions as jinjaExcept
@@ -89,6 +89,8 @@ def compose_cli(
         case 'client':
             cli += add_optional_arg("-m", total_calls)
             cli += ["-r", str(cps)]
+            if not destination:
+                raise Exception("Missing destination")
             cli.append(destination)
             # TODO: configurable report freq
             cli += ["-trace_stat", "-fd", "5", "-stf"]
@@ -221,13 +223,13 @@ if __name__ == "__main__":
                 (str_prefix, d_suffix) = u.dn_prefix(dn_start, n_ports)
 
                 dn_template = DN_TEMPLATE.format(nPorts=n_ports,
-                                                 offset=str(dn_start)[-d_suffix:],
+                                                 offset=int(str(dn_start)[-d_suffix:]),
                                                  prefix= str_prefix,
                                                  length=d_suffix)
 
                 with open(csv_file_dn, 'w') as file:
                     file.write(dn_template)
-                print(f"{n_ports} DNs: [{dn_start}, {dn_start+n_ports}]")
+                print(f"{n_ports} DNs: [{dn_start}, {dn_start+n_ports-1}]")
 
                 # Compose the sipp command arguments
                 control_port = get_control_port()
@@ -321,6 +323,8 @@ if __name__ == "__main__":
                 print(f"ERROR: Non-existing template: {err}")
             except KeyError as err:
                 print(f"ERROR: {err} not defined")
+            except Exception as err:
+                print(f"ERROR: {err}")
 
     # validate that there are no overlapping media ports
     u.title("Validate no ports overlap")
@@ -331,6 +335,11 @@ if __name__ == "__main__":
     print()
     if bDry_run or len(dScenarios) == 0:
         sys.exit(0)
+
+    def close_telegraf(pid):
+        time.sleep(5)
+        pid.kill()
+        pid.wait(5)
 
     # start telegraf
     p_telegraf = None
@@ -346,6 +355,7 @@ if __name__ == "__main__":
             if p_telegraf.poll():
                 print("ERROR: Failed to start telegraf")
                 sys.exit(1)
+            atexit.register(close_telegraf, p_telegraf)
 
 
     u.title("Start Scenarios", True)
@@ -402,8 +412,8 @@ if __name__ == "__main__":
             if wait_time_s < 0:
                 wait_time_s = 0
             time.sleep(wait_time_s)
-            print(f"{scn} cps changed to {cps}")
-            send_control_cmd("setRate", dScenarios[scn]['cPort'], dScenarios[scn]['ip'], cps)
+            u.title(f"{scn} cps changed to {cps}", True, True)
+            u.send_control_cmd("setRate", dScenarios[scn]['cPort'], dScenarios[scn]['ip'], cps)
             if len(config['streams']) == 0 and not scn_w_pattern[scn].get('repeat'):
                 scn_w_pattern[scn]['passed'] = True
                 pattern_streams.pop(scn)
@@ -427,9 +437,5 @@ if __name__ == "__main__":
        else:
            print(f"ERROR: unregistering {reg}")
 
-    if p_telegraf:
-        time.sleep(5)
-        p_telegraf.kill()
-        p_telegraf.wait(5)
     u.title("Close", True)
 

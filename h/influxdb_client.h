@@ -30,6 +30,7 @@ private:
     std::string bucket_;
     std::string token_;
     bool connected_;
+    bool not_connect_notify;
     CURL* curl_;
     struct curl_slist* headers_;
 };
