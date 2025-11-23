@@ -76,6 +76,7 @@ pack:   all test
 	@echo "Executables packed in $(PACK).tar"
 
 deb-pack:
+	# Note: these packages should be installed: build-essential debhelper dh-make devscripts
 	dch -i && dpkg-buildpackage -us -uc
 
 clean-old-packs:
